@@ -1,3 +1,10 @@
+import datetime
+class Task:
+    id = 0
+    name = ""
+    description = ""
+    deadline = datetime.datetime
+
 
 while True:
     command = input("Enter command: ")
