@@ -1,12 +1,12 @@
 import datetime
 class Task:
-    counter = [0]
+    counter = 0
     def __init__(self, name, description, deadline):
-        self.id = self.counter[0]
+        self.id = Task.counter
         self.name = name
         self.description = description
         self.deadline = deadline
-        self.counter[0] += 1
+        Task.counter += 1
     def __str__(self):
         return f"id={self.id},name={self.name},desc={self.description},dl={self.deadline}"
 def handle_add_task(task_array):
@@ -17,6 +17,9 @@ def handle_add_task(task_array):
     task_array.append(task)
 tasks = []
 while True:
+    tasks.append(Task("n1", "d1", "dl1"))
+    tasks.append(Task("n2", "d2", "dl2"))
+    tasks.append(Task("n3", "d3", "dl3"))
     command = input("Enter command: ")
     match command:
         case "add_task":
