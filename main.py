@@ -7,12 +7,12 @@ class Task:
 
     counter = 0
 
-    def __init__(self, name, description, deadline):
+    def __init__(self, name, description, deadline, is_done = False):
         self.id = Task.counter
         self.name = name
         self.description = description
         self.deadline = deadline
-        self.is_done = False
+        self.is_done = is_done
         Task.counter += 1
 
     def __str__(self):
@@ -28,6 +28,8 @@ def timedelta_str(delta: timedelta):
     minutes = (delta.seconds - 3600 * hours) // 60
     s += f"{hours}h {minutes}m"
     return s
+
+
 def handle_add_task(task_array):
     name = input("Enter the task's name: ")
     description = input("Enter the task's description: ")
@@ -38,9 +40,11 @@ def handle_add_task(task_array):
 
 
 tasks = []
-tasks.append(Task("n1", "d1", datetime(2024, 1, 24, 12, 30)))
-tasks.append(Task("n2", "d2", datetime(2024, 4, 14, 11, 30)))
-tasks.append(Task("n3", "d3", datetime(2024, 11, 14, 12, 30)))
+tasks.append(Task("n1", "d1", datetime(2024, 1, 24, 12, 30), True))
+tasks.append(Task("n2", "d2", datetime(2024, 4, 19, 11, 30)))
+tasks.append(Task("n3", "d3", datetime(2024, 6, 24, 12, 30)))
+tasks.append(Task("n4", "d3", datetime(2024, 7, 14, 12, 30), True))
+tasks.append(Task("n5", "d3", datetime(2024, 10, 14, 12, 30)))
 while True:
     command = input("Enter command: ")
     match command:
@@ -89,6 +93,19 @@ while True:
                     unr_tasks.append(tasks[i])
                 i += 1
             for task in unr_tasks:
+                print(task)
+        case "show_on_fire" | "sf":
+            res = []
+            days = int(input("Введите дни:"))
+            hours = int(input("Введите часы:"))
+            minutes = int(input("Введите минуты:"))
+            now = datetime.now()
+            delta = timedelta(days=days, hours=hours, minutes=minutes)
+            threshold = now + delta
+            for task in tasks:
+                if threshold > task.deadline and task.is_done == False:
+                    res.append(task)
+            for task in res:
                 print(task)
         case _:
             print("unknown command")
