@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
+import pickle
 
 
+FILENAME = 'savefile'
 class Task:
     DATETIME_FORMAT_INPUT = "%d/%m/%Y %H:%M"
     DATETIME_FORMAT_PRINT = "%d %b %Y %H:%M"
@@ -38,27 +40,35 @@ def handle_add_task(task_array):
     task = Task(name, description, deadline)
     task_array.append(task)
 
+def save_to_file(filename:str, object):
+    with open(filename, 'wb') as f:
+        pickle.dump(object, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-tasks = []
-tasks.append(Task("n1", "d1", datetime(2024, 1, 20, 12, 30), True))
-tasks.append(Task("n2", "d2", datetime(2024, 4, 19, 11, 3)))
-tasks.append(Task("n3", "d3", datetime(2024, 3, 24, 15, 34)))
-tasks.append(Task("n4", "d3", datetime(2024, 7, 6, 12, 56), True))
-tasks.append(Task("n5", "d3", datetime(2025, 10, 15, 6, 30)))
-tasks.append(Task("n6", "d3", datetime(2024, 12, 1, 12, 30), True))
-tasks.append(Task("n7", "d3", datetime(2024, 3, 3, 14, 30), True))
-tasks.append(Task("n8", "d3", datetime(2024, 5, 31, 20, 30)))
-tasks.append(Task("n9", "d3", datetime(2023, 12, 17, 2, 30)))
+with open(FILENAME, 'rb') as f:
+    tasks = pickle.load(f)
 while True:
     command = input("Enter command: ")
     match command:
+        case "backup":
+            pass
+            # создать файл рез. копии массива tasks с именем backup_<дата-время>
+            # например backup_25042024_19-30-00
+        case "load_backup":
+            pass
+            # считать с клавиатуры имя файла и загрузить из него массив tasks
+            # загрузку из файла вытащить в отдельную функцию
+        case "save" | "s":
+            save_to_file(FILENAME, tasks)
         case "add_task" | "a":
             handle_add_task(tasks)
         case "help" | "h":
             print("this is help")
         case "exit" | "q":
+            s = input("Save? Y/N")
+            if s.lower() == 'y':
+                save_to_file(FILENAME, tasks)
             break
-        case "show_tasks" | "s":
+        case "show_tasks" | "st":
             for task in tasks:
                 print(task)
         case "delete_by_id" | "d":
