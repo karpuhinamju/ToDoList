@@ -40,11 +40,15 @@ def handle_add_task(task_array):
 
 
 tasks = []
-tasks.append(Task("n1", "d1", datetime(2024, 1, 24, 12, 30), True))
-tasks.append(Task("n2", "d2", datetime(2024, 4, 19, 11, 30)))
-tasks.append(Task("n3", "d3", datetime(2024, 6, 24, 12, 30)))
-tasks.append(Task("n4", "d3", datetime(2024, 7, 14, 12, 30), True))
-tasks.append(Task("n5", "d3", datetime(2024, 10, 14, 12, 30)))
+tasks.append(Task("n1", "d1", datetime(2024, 1, 20, 12, 30), True))
+tasks.append(Task("n2", "d2", datetime(2024, 4, 19, 11, 3)))
+tasks.append(Task("n3", "d3", datetime(2024, 3, 24, 15, 34)))
+tasks.append(Task("n4", "d3", datetime(2024, 7, 6, 12, 56), True))
+tasks.append(Task("n5", "d3", datetime(2025, 10, 15, 6, 30)))
+tasks.append(Task("n6", "d3", datetime(2024, 12, 1, 12, 30), True))
+tasks.append(Task("n7", "d3", datetime(2024, 3, 3, 14, 30), True))
+tasks.append(Task("n8", "d3", datetime(2024, 5, 31, 20, 30)))
+tasks.append(Task("n9", "d3", datetime(2023, 12, 17, 2, 30)))
 while True:
     command = input("Enter command: ")
     match command:
@@ -107,5 +111,22 @@ while True:
                     res.append(task)
             for task in res:
                 print(task)
+        case "show_expired"|"se":
+            res = []
+            now = datetime.now()
+            for task in tasks:
+                if now > task.deadline:
+                    res.append(task)
+            for task in res:
+                print(task)
+        case "delete_expired"|"de":
+            i = 0
+            now = datetime.now()
+            while i < len(tasks):
+                if now > tasks[i].deadline:
+                    del tasks[i]
+                    i -= 1
+                i += 1
+            print("All expired tasks were deleted")
         case _:
             print("unknown command")
