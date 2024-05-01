@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
 import pickle
+import os
 
+SAVE_FILE_NAME = 'savefile'
+BACKUP_PATH = 'backups'
 
-FILENAME = 'savefile'
 class Task:
     DATETIME_FORMAT_INPUT = "%d/%m/%Y %H:%M"
     DATETIME_FORMAT_PRINT = "%d %b %Y %H:%M"
@@ -10,7 +12,7 @@ class Task:
 
     counter = 0
 
-    def __init__(self, name, description, deadline, is_done = False):
+    def __init__(self, name, description, deadline, is_done=False):
         self.id = Task.counter
         self.name = name
         self.description = description
@@ -41,30 +43,40 @@ def handle_add_task(task_array):
     task = Task(name, description, deadline)
     task_array.append(task)
 
-def save_to_file(filename:str, object):
+
+def save_to_file(filename: str, object):
     with open(filename, 'wb') as f:
         pickle.dump(object, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-with open(FILENAME, 'rb') as f:
+
+##########################################################################################
+if not os.path.exists(SAVE_FILE_NAME):
+    save_to_file(SAVE_FILE_NAME, [])
+
+if not os.path.isdir(BACKUP_PATH):
+    os.makedirs(BACKUP_PATH)
+
+with open(SAVE_FILE_NAME, 'rb') as f:
     tasks = pickle.load(f)
 while True:
     command = input("Enter command: ")
     match command:
-        case "backup"|"b":
+        case "backup" | "b":
             now = datetime.now()
-            name = "backups/backup_" + now.strftime(Task.DATETIME_FORMAT_BACKUP)
+            name = BACKUP_PATH + "/backup_" + now.strftime(Task.DATETIME_FORMAT_BACKUP)
             save_to_file(name, tasks)
             # создать файл рез. копии массива tasks с именем backup_<дата-время>
             # например backup_25042024_19-30-00
-        case "load_backup"|"lb":
-            filename = "backups/" + input("Enter file's name")
+        case "load_backup" | "lb":
+            filename = BACKUP_PATH + "/" + input("Enter file's name")
             with open(filename, 'rb') as f:
                 tasks = pickle.load(f)
+
             print("your tasks have been loaded")
             # считать с клавиатуры имя файла и загрузить из него массив tasks
             # загрузку из файла вытащить в отдельную функцию
         case "save" | "s":
-            save_to_file(FILENAME, tasks)
+            save_to_file(SAVE_FILE_NAME, tasks)
         case "add_task" | "a":
             handle_add_task(tasks)
         case "help" | "h":
@@ -72,7 +84,7 @@ while True:
         case "exit" | "q":
             s = input("Save? Y/N")
             if s.lower() == 'y':
-                save_to_file(FILENAME, tasks)
+                save_to_file(SAVE_FILE_NAME, tasks)
             break
         case "show_tasks" | "st":
             for task in tasks:
@@ -127,7 +139,7 @@ while True:
                     res.append(task)
             for task in res:
                 print(task)
-        case "show_expired"|"se":
+        case "show_expired" | "se":
             res = []
             now = datetime.now()
             for task in tasks:
@@ -135,7 +147,7 @@ while True:
                     res.append(task)
             for task in res:
                 print(task)
-        case "delete_expired"|"de":
+        case "delete_expired" | "de":
             i = 0
             now = datetime.now()
             while i < len(tasks):
