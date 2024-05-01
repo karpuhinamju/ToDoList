@@ -6,6 +6,7 @@ FILENAME = 'savefile'
 class Task:
     DATETIME_FORMAT_INPUT = "%d/%m/%Y %H:%M"
     DATETIME_FORMAT_PRINT = "%d %b %Y %H:%M"
+    DATETIME_FORMAT_BACKUP = "%d%m%Y_%H-%M-%S"
 
     counter = 0
 
@@ -49,12 +50,17 @@ with open(FILENAME, 'rb') as f:
 while True:
     command = input("Enter command: ")
     match command:
-        case "backup":
-            pass
+        case "backup"|"b":
+            now = datetime.now()
+            name = "backups/backup_" + now.strftime(Task.DATETIME_FORMAT_BACKUP)
+            save_to_file(name, tasks)
             # создать файл рез. копии массива tasks с именем backup_<дата-время>
             # например backup_25042024_19-30-00
-        case "load_backup":
-            pass
+        case "load_backup"|"lb":
+            filename = "backups/" + input("Enter file's name")
+            with open(filename, 'rb') as f:
+                tasks = pickle.load(f)
+            print("your tasks have been loaded")
             # считать с клавиатуры имя файла и загрузить из него массив tasks
             # загрузку из файла вытащить в отдельную функцию
         case "save" | "s":
