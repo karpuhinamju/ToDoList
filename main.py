@@ -58,6 +58,11 @@ if not os.path.isdir(BACKUP_PATH):
 
 with open(SAVE_FILE_NAME, 'rb') as f:
     tasks = pickle.load(f)
+    max_id = 0
+    for task in tasks:
+        if task.id > max_id:
+            max_id = task.id
+    Task.counter = max_id + 1
 while True:
     command = input("Enter command: ")
     match command:
@@ -156,5 +161,32 @@ while True:
                     i -= 1
                 i += 1
             print("All expired tasks were deleted")
+        case "search_task"|"search":
+            search = input("Enter task's name")
+            i = 0
+            while i < len(tasks):
+                if search in tasks[i].name:
+                    print(tasks[i])
+                i += 1
+        case "edit_tasks"|"et":
+            id = int(input("Enter task's id"))
+            i = 0
+            while i <len(tasks):
+                if id == tasks[i].id:
+                    break
+                i += 1
+            if i == len(tasks):
+                print(f"no task with id {id}")
+            else:
+                imya = input("Enter the task's name: ")
+                if imya != "-":
+                    tasks[i].name = imya
+                opisanie = input("Enter the task's description: ")
+                if opisanie != "-":
+                    tasks[i].description = opisanie
+                srock = input("Enter the task's deadline. Format: (dd/mm/yyyy HH:MM)")
+                if srock != "-":
+                    deadline_str = srock
+                    tasks[i].deadline = datetime.strptime(deadline_str, Task.DATETIME_FORMAT_INPUT)
         case _:
             print("unknown command")
