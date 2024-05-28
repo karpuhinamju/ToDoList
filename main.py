@@ -1,192 +1,97 @@
 from datetime import datetime, timedelta
 import pickle
 import os
+from diary import Diary
+from util import *
+from task import Task
 
-SAVE_FILE_NAME = 'savefile'
+SAVE_FILE_NAME = 'save_file'
 BACKUP_PATH = 'backups'
-
-class Task:
-    DATETIME_FORMAT_INPUT = "%d/%m/%Y %H:%M"
-    DATETIME_FORMAT_PRINT = "%d %b %Y %H:%M"
-    DATETIME_FORMAT_BACKUP = "%d%m%Y_%H-%M-%S"
-
-    counter = 0
-
-    def __init__(self, name, description, deadline, is_done=False):
-        self.id = Task.counter
-        self.name = name
-        self.description = description
-        self.deadline = deadline
-        self.is_done = is_done
-        Task.counter += 1
-
-    def __str__(self):
-        return f"[{self.id}] {self.name} ({self.description}). deadline: {self.deadline.strftime(Task.DATETIME_FORMAT_PRINT)} (left: {timedelta_str(self.deadline - datetime.now())}),done={self.is_done}"
-
-
-def timedelta_str(delta: timedelta):
-    s = ""
-    if delta.days != 0:
-        s += f"{delta.days} days "
-
-    hours = delta.seconds // 3600
-    minutes = (delta.seconds - 3600 * hours) // 60
-    s += f"{hours}h {minutes}m"
-    return s
-
-
-def handle_add_task(task_array):
-    name = input("Enter the task's name: ")
-    description = input("Enter the task's description: ")
-    deadline_str = input("Enter the task's deadline. Format: (dd/mm/yyyy HH:MM)")
-    deadline = datetime.strptime(deadline_str, Task.DATETIME_FORMAT_INPUT)
-    task = Task(name, description, deadline)
-    task_array.append(task)
-
-
-def save_to_file(filename: str, object):
-    with open(filename, 'wb') as f:
-        pickle.dump(object, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-
-##########################################################################################
 if not os.path.exists(SAVE_FILE_NAME):
     save_to_file(SAVE_FILE_NAME, [])
 
 if not os.path.isdir(BACKUP_PATH):
     os.makedirs(BACKUP_PATH)
 
-with open(SAVE_FILE_NAME, 'rb') as f:
-    tasks = pickle.load(f)
-    max_id = 0
-    for task in tasks:
-        if task.id > max_id:
-            max_id = task.id
-    Task.counter = max_id + 1
+diary = Diary([])
+diary.load(None)
 while True:
     command = input("Enter command: ")
     match command:
         case "backup" | "b":
             now = datetime.now()
             name = BACKUP_PATH + "/backup_" + now.strftime(Task.DATETIME_FORMAT_BACKUP)
-            save_to_file(name, tasks)
+            save_to_file(name, diary.tasks)
             # создать файл рез. копии массива tasks с именем backup_<дата-время>
             # например backup_25042024_19-30-00
         case "load_backup" | "lb":
             filename = BACKUP_PATH + "/" + input("Enter file's name")
-            with open(filename, 'rb') as f:
-                tasks = pickle.load(f)
+            diary.load(filename)
 
             print("your tasks have been loaded")
             # считать с клавиатуры имя файла и загрузить из него массив tasks
             # загрузку из файла вытащить в отдельную функцию
         case "save" | "s":
-            save_to_file(SAVE_FILE_NAME, tasks)
+            save_to_file(SAVE_FILE_NAME, diary.tasks)
         case "add_task" | "a":
-            handle_add_task(tasks)
+            name = input("Enter the task's name: ")
+            description = input("Enter the task's description: ")
+            deadline_str = input("Enter the task's deadline. Format: (dd/mm/yyyy HH:MM)")
+            diary.create_task(name, description, deadline_str, Task.DATETIME_FORMAT_INPUT)
         case "help" | "h":
             print("this is help")
         case "exit" | "q":
             s = input("Save? Y/N")
             if s.lower() == 'y':
-                save_to_file(SAVE_FILE_NAME, tasks)
+                save_to_file(SAVE_FILE_NAME, diary.tasks)
             break
         case "show_tasks" | "st":
-            for task in tasks:
+            for task in diary.tasks:
                 print(task)
         case "delete_by_id" | "d":
-            i = 0
             iddel = int(input("Введите id задачи: "))
-            while i < len(tasks):
-                if tasks[i].id == iddel:
-                    del tasks[i]
-                    break
-                i += 1
+            diary.delete_by_id(iddel)
         case "resolve_task" | "rt":
-            i = 0
             id = int(input("Введите id задачи"))
-            while i < len(tasks):
-                if tasks[i].id == id:
-                    tasks[i].is_done = True
-                    break
-                i += 1
+            diary.resolve_task(id)
         case "delete_resolved" | "dr":
-            i = 0
-            isd_tasks = []
-            while i < len(tasks):
-                if tasks[i].is_done:
-                    isd_tasks.append(tasks[i])
-                    del tasks[i]
-                    i -= 1
-                i += 1
-                for task in isd_tasks:
-                    print("the task with id", task.id, "has been deleted")
-            print(len(isd_tasks), "task(s) have been deleted")
+            deleted = diary.delete_resolved()
+            for task in deleted:
+                print("the task with id", task.id, "has been deleted")
+            print(len(deleted), "task(s) have been deleted")
+
         case "show_unresolved" | "su":
-            unr_tasks = []
-            i = 0
-            while i < len(tasks):
-                if tasks[i].is_done == False:
-                    unr_tasks.append(tasks[i])
-                i += 1
+            unr_tasks = diary.show_unresolved()
             for task in unr_tasks:
                 print(task)
         case "show_on_fire" | "sf":
-            res = []
             days = int(input("Введите дни:"))
             hours = int(input("Введите часы:"))
             minutes = int(input("Введите минуты:"))
-            now = datetime.now()
             delta = timedelta(days=days, hours=hours, minutes=minutes)
-            threshold = now + delta
-            for task in tasks:
-                if threshold > task.deadline and task.is_done == False:
-                    res.append(task)
+            res = diary.show_on_fire(delta)
             for task in res:
                 print(task)
         case "show_expired" | "se":
-            res = []
-            now = datetime.now()
-            for task in tasks:
-                if now > task.deadline:
-                    res.append(task)
+            res = diary.show_expired()
             for task in res:
                 print(task)
         case "delete_expired" | "de":
-            i = 0
-            now = datetime.now()
-            while i < len(tasks):
-                if now > tasks[i].deadline:
-                    del tasks[i]
-                    i -= 1
-                i += 1
+            diary.delete_expired()
             print("All expired tasks were deleted")
         case "search_task"|"search":
-            search = input("Enter task's name")
-            i = 0
-            while i < len(tasks):
-                if search in tasks[i].name:
-                    print(tasks[i])
-                i += 1
+            search = input("Enter part of task's name")
+            res = diary.search_task(search)
+            for task in res:
+                print(task)
         case "edit_tasks"|"et":
             id = int(input("Enter task's id"))
-            i = 0
-            while i <len(tasks):
-                if id == tasks[i].id:
-                    break
-                i += 1
-            if i == len(tasks):
+            if not diary.has_task_with_id(id):
                 print(f"no task with id {id}")
             else:
                 imya = input("Enter the task's name: ")
-                if imya != "-":
-                    tasks[i].name = imya
                 opisanie = input("Enter the task's description: ")
-                if opisanie != "-":
-                    tasks[i].description = opisanie
                 srock = input("Enter the task's deadline. Format: (dd/mm/yyyy HH:MM)")
-                if srock != "-":
-                    deadline_str = srock
-                    tasks[i].deadline = datetime.strptime(deadline_str, Task.DATETIME_FORMAT_INPUT)
+                diary.change_task(id, imya, opisanie, srock)
         case _:
             print("unknown command")
